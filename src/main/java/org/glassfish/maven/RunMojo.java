@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Foundation
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,6 +21,9 @@ import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Execute;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 import java.io.BufferedReader;
@@ -33,22 +37,23 @@ import java.util.Properties;
 /**
  * This Mojo starts Embedded GlassFish, executes all the 'admin' goals,
  * and executes all 'deploy' goals, and waits for user's input.
- * <p/>
- * <p/>
+ * <p>
  * While it is waiting for user's input, the user can access the deployed applications.
- * <p/>
+ * </p>
  * Upon user's input, it undeploys all the applications that were
  * defined in all 'deploy' goals, and redeploys all of them.
- * <p/>
+ * <p>
  * If user enters 'X' in their console for this Mojo will stop Embedded GlassFish and
  * will exit.
- *
+ * </p>
  * @author bhavanishankar@dev.java.net
- * @goal run
- * @phase pre-integration-test
  */
+@Mojo( name = "run")
+@Execute( goal = "run",
+        phase = LifecyclePhase.PRE_INTEGRATION_TEST)
 public class RunMojo extends AbstractDeployMojo {
 
+    @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
 
         List<Properties> commands = getAdminCommandConfigurations();
@@ -234,11 +239,12 @@ public class RunMojo extends AbstractDeployMojo {
     /**
      * Read the configurations that are like this:
      * <p/>
-     * <configurations>
-     * <configuration>a=b</configuration>
-     * <configuration>x=y</configuration>
-     * </configurations>
-     *
+     * <pre>
+     * &lt;configurations&gt;
+     * &lt;configuration&gt;a=b&lt;/configuration&gt;
+     * &lt;configuration&gt;x=y&lt;/configuration&gt;
+     * &lt;/configurations&gt;
+     * </pre>
      * @param node Base node from where the configurations should be read.
      * @return List of configurations.
      */

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Foundation
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,20 +19,22 @@ package org.glassfish.maven;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-
-import java.lang.reflect.Method;
-import java.util.Properties;
+import org.apache.maven.plugins.annotations.Execute;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
 
 /**
  * This Mojo starts the Embedded GlassFish with the configured parameters
  * supplied by the user in the embedded-glassfish-maven-plugin configuration.
  *
  * @author bhavanishankar@dev.java.net
- * @goal start
- * @phase pre-integration-test
  */
+@Mojo( name = "start")
+@Execute( goal = "start",
+        phase = LifecyclePhase.PRE_INTEGRATION_TEST)
 public class StartMojo extends AbstractServerMojo {
 
+    @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         try {
             startGlassFish(serverID, getClassLoader(), getBootStrapProperties(),

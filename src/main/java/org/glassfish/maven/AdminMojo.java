@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Foundation
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,29 +21,35 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 
 import java.lang.reflect.Method;
+import org.apache.maven.plugins.annotations.Execute;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 
 /**
  * This Mojo runs post startup adminstrative commands on the Embedded GlassFish.
  * The commands should be specified in the commands string array.
  *
  * @author bhavanishankar@dev.java.net
- * @goal admin
- * @phase pre-integration-test
  */
+@Mojo(name = "admin")
+@Execute(goal = "admin",
+        phase = LifecyclePhase.PRE_INTEGRATION_TEST)
 public class AdminMojo extends AbstractServerMojo {
 
     /**
      * The set of post startup commands to be run on Embedded GlassFish.
-     * <p/>
+     * <p>
      * For example:
+     * </p>
      * <pre>
      * &lt;commands&gt;
      *      &lt;command&gt;set configs.config.server-config.network-config.protocols.protocol.http-listener.http.websockets-support-enabled=true&lt;/command&gt;
      * &lt;/commands&gt;
      * </pre>
-     *
-     * @parameter expression="${commands}"
+     * 
      */
+    @Parameter(property = "commands")
     protected String[] commands;
 
     @Override
@@ -55,8 +62,8 @@ public class AdminMojo extends AbstractServerMojo {
         }
     }
 
-    public void runCommand(String serverId, ClassLoader cl,
-                           String[] commandLines) throws Exception {
+    public void runCommand(String serverId, ClassLoader cl, String[] commandLines) throws Exception {
+        
         Class clazz = cl.loadClass(PluginUtil.class.getName());
         Method m = clazz.getMethod("runCommand", new Class[]{
                 String.class, String[].class});

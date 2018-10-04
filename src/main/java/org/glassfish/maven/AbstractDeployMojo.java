@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Foundation
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,10 +19,12 @@ package org.glassfish.maven;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -29,99 +32,100 @@ import java.util.Properties;
  * @author bhavanishankar@dev.java.net
  */
 public abstract class AbstractDeployMojo extends AbstractServerMojo {
+    
     /**
      * <b><i>Note : &lt;deploymentParams&gt; configuration can be used instead of this.</i></b>
-     * <p/>
+     * <p>
      * Name of the application.
-     *
-     * @parameter expression="${name}" default-value="myapp"
+     * </p>
      */
+    @Parameter(property= "name", defaultValue = "myapp")
     protected String name;
 
     /**
      * <b><i>Note : &lt;deploymentParams&gt; configuration can be used instead of this.</i></b>
-     * <p/>
+     * <p>
      * Context root of the web application.
-     *
-     * @parameter expression="${contextRoot}"
+     * </p>
      */
+    @Parameter(property="contextRoot")
     protected String contextRoot;
 
     /**
      * <b><i>Note : &lt;deploymentParams&gt; configuration can be used instead of this.</i></b>
-     * <p/>
+     * <p>
      * Specify whether the JSPs should be precompiled during deployment.
-     *
-     * @parameter expression="${precompileJsp}"
+     * </p>
      */
+    @Parameter(property="precompileJsp")
     protected Boolean precompileJsp;
 
     /**
      * <b><i>Note : &lt;deploymentParams&gt; configuration can be used instead of this.</i></b>
-     * <p/>
+     * <p>
      * Name of the database vendor.
-     *
-     * @parameter expression="${dbVendorName}"
+     * </p>
      */
+    @Parameter(property="dbVendorName")
     protected String dbVendorName;
 
     /**
      * <b><i>Note : &lt;deploymentParams&gt; configuration can be used instead of this.</i></b>
-     * <p/>
+     * <p>
      * Specify whether the tables should be created during deployment.
-     *
-     * @parameter expression="${createTables}"
+     * </p>
      */
+    @Parameter(property="createTables")
     protected Boolean createTables;
 
     /**
      * <b><i>Note : &lt;deploymentParams&gt; configuration can be used instead of this.</i></b>
-     * <p/>
+     * <p>
      * A comma-separated list of library JAR files.
-     *
-     * @parameter expression="${libraries}"
+     * </p>
      */
+    @Parameter(property="libraries")
     protected String libraries;
+    
     /**
      * Build directory of the maven project. Automatically injected by
      * Maven framework.
      *
-     * @parameter expression="${project.build.directory}"
      */
+    @Parameter(defaultValue="${project.build.directory}")
     String buildDirectory;
 
     /**
      * Base directory of the maven project. Automatically injected by
      * Maven framework.
-     *
-     * @parameter expression="${basedir}"
      */
+    @Parameter(property="basedir")
     String baseDirectory;
 
     /**
      * Name of the file to be deployed to Embedded GlassFish.
-     * <p/>
+     * <p>
      * Use app configuration instead of this.
-     *
-     * @parameter expression="${project.build.finalName}"
+     * </p>
      */
+    @Parameter(defaultValue="${project.build.finalName}")
     String fileName;
 
     /**
      * Location of the application to be deployed.
-     * <p/>
+     * <p>
      * Location could be a Java EE file archive or a directory.
-     *
-     * @parameter expression="${app}"
+     * </p>
      */
+    @Parameter(property="app")
     protected String app;
 
     /**
      * Deployment parameters to be used while deploying the application to Embedded GlassFish.
-     * <p/>
+     * <p>
      * The deployment parameters are same as how they would be passed to
      * 'asadmin deploy' command while using standalone GlassFish.
-     * <p/>
+     * </p>
      * For example:
      * <pre>
      * &lt;deploymentParams&gt;
@@ -133,17 +137,17 @@ public abstract class AbstractDeployMojo extends AbstractServerMojo {
      * &lt;/deploymentParams&gt;
      * </pre>
      *
-     * @parameter expression="${deploymentParams}"
      */
+    @Parameter(property="deploymentParams")
     protected String[] deploymentParams;
 
     /**
      * Undeployment parameters to be used while undeploying the application
      * from Embedded GlassFish.
-     * <p/>
+     * <p>
      * The undeployment parameters are same as how they would be passed to
      * 'asadmin undeploy' command while using standalone GlassFish.
-     * <p/>
+     * </p>
      * For example:
      * <pre>
      * &lt;undeploymentParams&gt;
@@ -151,10 +155,11 @@ public abstract class AbstractDeployMojo extends AbstractServerMojo {
      * &lt;/undeploymentParams&gt;
      * </pre>
      *
-     * @parameter expression="${undeploymentParams}"
      */
+    @Parameter(property="undeploymentParams")
     protected String[] undeploymentParams;
 
+    @Override
     public abstract void execute() throws MojoExecutionException, MojoFailureException;
 
     protected String[] getDeploymentParameters() {
@@ -167,9 +172,7 @@ public abstract class AbstractDeployMojo extends AbstractServerMojo {
         set(deployParams, "--createtables", createTables);
         set(deployParams, "--libraries", libraries);
         if (deploymentParams != null) {
-            for (String p : deploymentParams) {
-                deployParams.add(p);
-            }
+            deployParams.addAll(Arrays.asList(deploymentParams));
         }
         return deployParams.toArray(new String[0]);
     }
@@ -193,9 +196,7 @@ public abstract class AbstractDeployMojo extends AbstractServerMojo {
     protected String[] getUndeploymentParameters() {
         List<String> undeployParams = new ArrayList();
         if (undeploymentParams != null) {
-            for (String p : undeploymentParams) {
-                undeployParams.add(p);
-            }
+            undeployParams.addAll(Arrays.asList(undeploymentParams));
         }
         return undeployParams.toArray(new String[0]);
     }

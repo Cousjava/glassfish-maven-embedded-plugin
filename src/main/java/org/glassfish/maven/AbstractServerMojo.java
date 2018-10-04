@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Foundation
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,13 +19,12 @@ package org.glassfish.maven;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
-import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
-import org.apache.maven.artifact.metadata.ResolutionGroup;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
-import org.apache.maven.artifact.resolver.ArtifactResolver;
+import org.apache.maven.shared.artifact.resolve.ArtifactResolver;
 import org.apache.maven.model.Dependency;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -42,6 +42,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.project.ProjectBuildingResult;
 
 /**
  * @author bhavanishankar@dev.java.net
@@ -68,90 +71,85 @@ public abstract class AbstractServerMojo extends AbstractMojo {
 
     private static final String GF_API_GROUP_ID = "org.glassfish.main.common";
     private static final String GF_API_ARTIFACT_ID = "simple-glassfish-api";
-    private static final String DEFAULT_GF_VERSION = "4.0";
+    private static final String DEFAULT_GF_VERSION = "5.0";
     private static String gfVersion;
 
     /**
      * The remote repositories where artifacts are located.
      * This is automatically injected by the Maven framework.
-     *
-     * @parameter expression="${project.remoteArtifactRepositories}"
      */
+    @Parameter(defaultValue="${project.remoteArtifactRepositories}")
     protected List remoteRepositories;
 
     /**
      * Identifier of the Embedded GlassFish server.
-     *
-     * @parameter expression="${serverID}" default-value="maven"
      */
+    @Parameter(property="serverID", defaultValue="maven")
     protected String serverID;
 
     /**
-     * <b><i>Note : Using &lt;ports&gt; configuration is preferred over this configuration.</b></i>
-     * <p/>
+     * <b><i>Note : Using &lt;ports&gt; configuration is preferred over this configuration.</i></b>
+     * <p>
      * Specify the HTTP port number.
-     * <p/>
+     * </p>
      * For example:
      * &lt;port&gt;8080&lt;/port&gt;
-     * <p/>
+     * <p>
      * This setting is ignored when configFile option is used.
-     * <p/>
+     * </p>
      *
-     * @parameter expression="${port}" default-value="-1"
      */
+    @Parameter(property = "port", defaultValue = "-1")
     protected int port;
 
 
     /**
      * Location of valid GlassFish installation.
-     *
-     * @parameter expression="${installRoot}"
      */
+    @Parameter(property = "installRoot")
     protected String installRoot;
-
+    
+    
     /**
      * Location of valid GlassFish domain.
-     *
-     * @parameter expression="${instanceRoot}"
      */
+    @Parameter(property = "instanceRoot")
     protected String instanceRoot;
 
     /**
      * Location of custom configuration file (i.e., location of custom domain.xml).
-     *
-     * @parameter expression="${configFile}"
      */
+    @Parameter(property = "configFile")
     protected String configFile;
 
     /**
      * Specify whether the custom configuration file or config/domain.xml at
      * the specified instance root is operated read only or not.
-     *
-     * @parameter expression="${configFileReadOnly}" default-value="true"
      */
+    @Parameter(property = "configFileReadOnly", defaultValue="true")
     protected Boolean configFileReadOnly;
 
     /**
      * Specify the port numbers for the network listeners.
-     * <p/>
+     * <p>
      * Built-in domain.xml has HTTP and HTTPS network listeners by names
      * http-listener and https-listener respectively.
      * That allows you to configure the ports like this:
-     * <p/>
+     * </p>
      * <pre>
      * &lt;ports&gt;
      *      &lt;http-listener&gt;8080&lt;/http-listener&gt;
      *      &lt;https-listener&gt;8181&lt;/http-listener&gt;
      * &lt;/ports&gt;
      * </pre>
-     * <p/>
+     * <p>
      * If you are using custom domain.xml, you can either configure the ports
      * directy in your domain.xml or configure using this configuration parameter by
      * correctly specifying port numbers for the the names of the network-listener element
      * of your domain.xml.
-     *
-     * @parameter
+     * </p>
      */
+    @Parameter
     protected Map<String, String> ports;
 
     /**
@@ -159,50 +157,50 @@ public abstract class AbstractServerMojo extends AbstractMojo {
      * For example:
      * <pre>
      * &lt;bootstrapProperties&gt;
-     *      &lt;property>GlassFish_Platform=felix&lt;/property&gt;
+     *      &lt;property&gt;GlassFish_Platform=felix&lt;/property&gt;
      * &lt;/bootstrapProperties&gt;
      * </pre>
      *
-     * @parameter
      */
+    @Parameter
     protected List<String> bootstrapProperties;
 
     /**
      * Specify the location of the properties file which has the properties required to bootstrap GlassFishRuntime.
      * For example:
-     * <p/>
+     * <p>
      * &lt;bootstrapPropertiesFile&gt;bootstrap.properties&lt;/bootstrapPropertiesFile&gt;
-     * <p/>
+     * </p>
      * where bootstrap.properties is a file containing the bootstrap properties.
      *
-     * @parameter
      */
+    @Parameter
     protected File bootstrapPropertiesFile;
 
     /**
      * Specify the set of properties required to create a new Embedded GlassFish.
-     * <p/>
-     * For example:
+     * <p>
+     * For example:</p>
      * <pre>
      * &lt;glassfishProperties&gt;
-     *      &lt;property>embedded-glassfish-config.server.jms-service.jms-host.default_JMS_host.port=17676&lt;/property&gt;
+     *      &lt;property&gt;embedded-glassfish-config.server.jms-service.jms-host.default_JMS_host.port=17676&lt;/property&gt;
      * &lt;/glassfishProperties&gt;
      * </pre>
      *
-     * @parameter
      */
+    @Parameter
     protected List<String> glassfishProperties;
 
     /**
      * Specify the location of the properties file which has the properties required to create a new GlassFish.
      * For example:
-     * <p/>
+     * <p>
      * &lt;glassfishPropertiesFile&gt;glassfish.properties&lt;/glassfishPropertiesFile&gt;
-     * <p/>
+     * </p>
      * where glassfish.properties is a file containing the GlassFish properties.
      *
-     * @parameter
      */
+    @Parameter
     protected File glassfishPropertiesFile;
 
     /**
@@ -212,80 +210,70 @@ public abstract class AbstractServerMojo extends AbstractMojo {
      * &lt;systemProperties&gt;
      *      &lt;property&gt;com.sun.aas.imqLib=${env.S1AS_HOME}/../mq/lib&lt;/property&gt;
      *      &lt;property&gt;com.sun.aas.imqBin=${env.S1AS_HOME}/../mq/bin&lt;/property&gt;
-     * &lt;/systemProperties>
+     * &lt;/systemProperties&gt;
      * </pre>
      *
-     * @parameter
      */
+    @Parameter
     protected List<String> systemProperties;
 
     /**
      * Specify the location of the properties file which has the system properties.
-     * <p/>
+     * <p>
      * For example:
      * &lt;systemPropertiesFile&gt;/tmp/system.properties&lt;/systemPropertiesFile&gt;
-     *
-     * @parameter
+     * </p>
      */
+    @Parameter
     protected File systemPropertiesFile;
 
     /**
      * Specify whether the temporary file system created by Embedded GlassFish
      * should be deleted when Maven exits.
-     * <p/>
+     * <p>
      * Embedded GlassFish creates the temporary
      * file system under java.io.tmpdir unless a different directory is specified with
      * glassfish.embedded.tmpdir system property.
-     *
-     * @parameter expression="${autoDelete}" default-value="true"
+     * </p>
      */
+    @Parameter(property = "autoDelete", defaultValue="true")
     protected Boolean autoDelete;
 
     /**
      * The maven project.
-     *
-     * @parameter expression="${project}"
-     * @required
-     * @readonly
      */
+    @Parameter(property="project", required = true, readonly = true)
     protected MavenProject project;
 
     /**
      * This is automatically injected by the Maven framework.
      *
-     * @parameter default-value="${plugin.artifacts}"
      */
+    @Parameter(defaultValue="${plugin.artifacts}")
     private java.util.List<Artifact> artifacts; // pluginDependencies
 
-    /**
-     * @component
-     */
+    @Component
     protected MavenProjectBuilder projectBuilder;
 
     /**
      * This is automatically injected by the Maven framework.
-     *
-     * @parameter expression="${localRepository}"
-     * @required
      */
+    @Parameter(property = "localRepository", required = true)
     protected ArtifactRepository localRepository;
 
-    /**
-     * @component
-     */
+    @Component
     protected ArtifactResolver resolver;
 
     /**
      * Used to construct artifacts for deletion/resolution...
-     *
-     * @component
      */
+    @Component
     protected ArtifactFactory factory;
 
     /**
-     * @parameter expression="${containerType}" default-value="all"
      * @deprecated This is a deprecated and unused configuration. Likely to be removed in the next version of the plugin.
      */
+    @Parameter(property = "containerType", defaultValue="all")
     protected String containerType;
 
 //    protected GlassFish gf;
@@ -294,11 +282,7 @@ public abstract class AbstractServerMojo extends AbstractMojo {
     protected static HashMap<String, ClassLoader> classLoaders = new HashMap();
     private static ClassLoader classLoader;
 
-    /**
-     * @component
-     */
-    private ArtifactMetadataSource artifactMetadataSource;
-
+    @Override
     public abstract void execute() throws MojoExecutionException, MojoFailureException;
 
     protected ClassLoader getClassLoader() throws MojoExecutionException {
@@ -384,15 +368,16 @@ public abstract class AbstractServerMojo extends AbstractMojo {
         if (gfVersion != null) {
             return gfVersion;
         }
-        ResolutionGroup resGroup = artifactMetadataSource.retrieve(
-                gfMvnPlugin, localRepository, remoteRepositories);
-        MavenProject pomProject = projectBuilder.buildFromRepository(resGroup.getPomArtifact(),
-                remoteRepositories, localRepository);
-        List<Dependency> dependencies = pomProject.getOriginalModel().getDependencies();
-        for (Dependency dependency : dependencies) {
-            if (GF_API_GROUP_ID.equals(dependency.getGroupId()) &&
-                    GF_API_ARTIFACT_ID.equals(dependency.getArtifactId())) {
-                gfVersion = dependency.getVersion();
+        
+        ProjectBuildingRequest projectBuildReuqest = new org.apache.maven.project.DefaultProjectBuildingRequest();
+        projectBuildReuqest.setRemoteRepositories(remoteRepositories);
+        projectBuildReuqest.setLocalRepository(localRepository);
+        ProjectBuildingResult resultGroup = new org.apache.maven.project.DefaultProjectBuilder().build(gfMvnPlugin, projectBuildReuqest);
+        List<org.eclipse.aether.graph.Dependency> dependencies = resultGroup.getDependencyResolutionResult().getDependencies();
+        for (org.eclipse.aether.graph.Dependency dependency : dependencies) {
+            if (GF_API_GROUP_ID.equals(dependency.getArtifact().getGroupId()) &&
+                    GF_API_ARTIFACT_ID.equals(dependency.getArtifact().getArtifactId())) {
+                gfVersion = dependency.getArtifact().getVersion();
             }
         }
         gfVersion = gfVersion != null ? gfVersion : DEFAULT_GF_VERSION;
@@ -408,7 +393,12 @@ public abstract class AbstractServerMojo extends AbstractMojo {
             String gfVersion = getGlassfishVersion(gfMvnPlugin); // get the same version of uber jar as that of simple-glassfish-api used while building this plugin.
             gfUber = factory.createArtifact(EMBEDDED_GROUP_ID, EMBEDDED_ALL,
                     gfVersion, "compile", "jar");
-            resolver.resolve(gfUber, remoteRepositories, localRepository);
+            
+            ProjectBuildingRequest projectBuildReuqest = new org.apache.maven.project.DefaultProjectBuildingRequest();
+            projectBuildReuqest.setRemoteRepositories(remoteRepositories);
+            projectBuildReuqest.setLocalRepository(localRepository);
+            ProjectBuildingResult resultGroup = new org.apache.maven.project.DefaultProjectBuilder().build(gfUber, projectBuildReuqest);
+            //resolver.resolve(gfUber, remoteRepositories, localRepository);
             cl = new URLClassLoader(
                     new URL[]{gfUber.getFile().toURI().toURL()}, getClass().getClassLoader());
         }

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Foundation
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,6 +19,9 @@ package org.glassfish.maven;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Execute;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -27,38 +31,27 @@ import java.util.HashMap;
  * This goal is not implemented. There is no usecase/requirement in support of this goal.
  *
  * @author bhavanishankar@dev.java.net
- * @goal runscatteredarchive
  */
-
+@Mojo( name = "runscatteredarchive")
+@Execute(goal = "runscatteredarchive")
 public class RunScatteredArchive extends AbstractDeployMojo {
 
-    /**
-     * @parameter expression="${cascade}"
-     */
+    @Parameter(property ="cascade")
     Boolean cascade;
-    /**
-     * @parameter expression="${dropTables}"
-     */
+    
+    @Parameter(property="dropTables")
     Boolean dropTables;
 
-    /**
-     * @parameter expression="${rootdirectory}"
-     * @required
-     */
+    @Parameter(property = "rootdirectory", required=true)
     protected String rootdirectory;
-    /**
-     * @parameter expression="${resources}"
-     */
+    
+    @Parameter(property="resources")
     protected String resources;
 
-    /**
-     * @parameter expression="${classpath}"
-     */
+    @Parameter(property="classpath")
     protected ArrayList<String> classpath = new ArrayList();
 
-    /**
-     * @parameter expression="${metadata}"
-     */
+    @Parameter(property="metadara")
     protected HashMap<String, File> metadata = new HashMap();
 
     @Override

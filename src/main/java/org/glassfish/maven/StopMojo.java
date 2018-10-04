@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Foundation
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,19 +19,21 @@ package org.glassfish.maven;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-
-import java.lang.reflect.Method;
+import org.apache.maven.plugins.annotations.Execute;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
 
 /**
  * This Mojo stops the Embedded GlassFish server.
  *
  * @author bhavanishankar@dev.java.net
- * @goal stop
- * @phase post-integration-test
  */
-
+@Mojo( name = "stop")
+@Execute(goal = "stop",
+        phase = LifecyclePhase.POST_INTEGRATION_TEST)
 public class StopMojo extends AbstractServerMojo {
 
+    @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         try {
             stopGlassFish(serverID, getClassLoader());

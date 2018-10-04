@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Payara Foundation
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,21 +19,25 @@ package org.glassfish.maven;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Execute;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
 
 /**
  * This Mojo undeploys the application from the Embedded GlassFish server.
- * <p/>
+ * <p>
  * The name of the application to be undeployed can be specified using 'name'
  * configuration and the undeployment parameters can be specified in
  * 'undeploymentParams' configuration.
- *
+ * </p>
  * @author bhavanishankar@dev.java.net
- * @goal undeploy
- * @phase post-integration-test
  */
-
+@Mojo (name = "undeploy")
+@Execute( goal = "undeploy",
+        phase = LifecyclePhase.POST_INTEGRATION_TEST)
 public class UndeployMojo extends AbstractDeployMojo {
 
+    @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         try {
             doUndeploy(serverID, getClassLoader(), getBootStrapProperties(),
